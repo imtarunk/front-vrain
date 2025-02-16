@@ -1,5 +1,7 @@
 import { Calendar, Home, Inbox, Settings } from "lucide-react";
-
+import { CiLogin } from "react-icons/ci";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import {
   Sidebar,
   SidebarContent,
@@ -11,31 +13,39 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-// Menu items.
-const items = [
-  {
-    title: "Home",
-    url: "#",
-    icon: Home,
-  },
-  {
-    title: "Add content",
-    url: "#",
-    icon: Inbox,
-  },
-  {
-    title: "Share",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
-];
-
 export function AppSidebar() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Remove the stored token
+    toast.success("Logged out successfully!");
+    navigate("/auth"); // Navigate instead of reloading
+  };
+
+  // Menu items.
+  const items = [
+    {
+      title: "Home",
+      url: "#",
+      icon: Home,
+    },
+    {
+      title: "Add content",
+      url: "#",
+      icon: Inbox,
+    },
+    {
+      title: "Share",
+      url: "#",
+      icon: Calendar,
+    },
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings,
+    },
+  ];
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -49,12 +59,20 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <a href={item.url}>
-                      <item.icon />
+                      <item.icon size="24px" />
                       <span>{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              {/* Logout Button */}
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout}>
+                  <CiLogin size="24px" />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

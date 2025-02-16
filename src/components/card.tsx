@@ -1,7 +1,7 @@
-const Card = () => {
+const Card = ({ data }) => {
   return (
     <div className="h-full w-full ">
-      <div className="relative w-72 h-96 overflow-hidden rounded-xl border-2 shadow-lg bg-white transition-transform duration-300 hover:scale-105">
+      <div className="relative w-60 min-h-80 overflow-hidden rounded-xl border-2 shadow-lg bg-white transition-transform duration-300 hover:scale-105">
         {/* Title */}
         <h1 className="text-lg font-semibold text-center p-4">
           Contact Form Validation
@@ -21,14 +21,13 @@ const Card = () => {
 
         {/* Description */}
         <p className="absolute bottom-4 left-4 right-4 text-white text-sm font-medium z-10">
-          Learn how to handle form validation in React effortlessly. Master
-          input validation with modern UI.
+          {data.link}
         </p>
 
         {/* Tags & Priority */}
         <div className="absolute top-4 left-4 flex gap-2 z-10">
           <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
-            Development
+            {data.title}
           </span>
           <span className="bg-red-500 text-white text-xs px-3 py-1 rounded-full">
             High
