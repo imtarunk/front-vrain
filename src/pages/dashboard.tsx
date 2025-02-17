@@ -1,9 +1,8 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "../components/app-sidebar";
-import Card from "../components/card";
 import { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import NewCard from "@/components/newCard";
+import NewSidebar from "@/components/ui/newSidebar";
 
 export default function Layout() {
   const [content, setContent] = useState([]);
@@ -43,22 +42,20 @@ export default function Layout() {
     };
 
     fetchContent();
-  }, [content]);
+  }, []);
 
   return (
-    <div>
-      <SidebarProvider>
-        <AppSidebar />
-        <div className="grid grid-cols-4 gap-5 m-4">
-          {content.map((item, index) => (
-            <a href={content.link} key={index}>
-              <Card key={index} data={item} />
-            </a>
+    <div className="flex">
+      <NewSidebar />
+      <div className="ml-72">
+        <h1 className="text-4xl m-4 px-4 text-gray-800">Notes</h1>
+        <div className="flex  flex-wrap gap-4 m-4 w-full">
+          {content.map((item) => (
+            <NewCard key={item._id} data={item} />
           ))}
         </div>
-
-        <Toaster />
-      </SidebarProvider>
+      </div>
+      <Toaster />
     </div>
   );
 }
