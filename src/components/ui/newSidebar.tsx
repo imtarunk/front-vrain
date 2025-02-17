@@ -15,7 +15,11 @@ import { Input } from "./input";
 import { Textarea } from "./textarea";
 import { Button } from "./button";
 
-const NewSidebar = ({ setPage }) => {
+interface setPage {
+  page?: string;
+}
+
+const NewSidebar = ({ setPage }: { setPage: setPage }) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
 

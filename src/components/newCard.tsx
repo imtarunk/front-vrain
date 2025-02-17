@@ -3,7 +3,17 @@ import { ShareIcon, DeleteIcon } from "../components/icon/shareicon";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
-const NewCard = ({ data }) => {
+// Interface for type safety
+interface Data {
+  _id: string;
+  link: string;
+  title: string;
+  description: string;
+  image?: string;
+  tags?: string[];
+}
+
+const NewCard = ({ data }: { data: Data }) => {
   const [preview, setPreview] = useState(
     "https://media.istockphoto.com/id/814423752/photo/eye-of-model-with-colorful-art-make-up-close-up.jpg?s=612x612&w=0&k=20&c=l15OdMWjgCKycMMShP8UK94ELVlEGvt7GmB_esHWPYE="
   );
@@ -65,12 +75,13 @@ const NewCard = ({ data }) => {
       console.log(response);
 
       if (response.status === 200) {
+        //@ts-ignore
         toast(response.data?.message || "Content shared successfully!");
       } else {
         toast.error("Failed to share content");
       }
     } catch (e) {
-      console.error("Error occurred:", e.response || e); // Log more detailed error if available
+      console.error("Error occurred:", e); // Log more detailed error if available
     }
   };
 
@@ -98,16 +109,16 @@ const NewCard = ({ data }) => {
 
         {/* Preview Section */}
         <div className="w-full p-2 flex-wrap">
-          {preview.includes("<blockquote") ? (
-            <div dangerouslySetInnerHTML={{ __html: preview }} />
-          ) : (
-            <a href={data.link} target="_blank">
+          {typeof preview === "string" ? (
+            <a href={data.link} target="_blank" rel="noopener noreferrer">
               <img
                 src={preview}
                 alt="Preview"
                 className="w-full h-40 object-cover  rounded-md"
               />
             </a>
+          ) : (
+            <div dangerouslySetInnerHTML={{ __html: preview }} />
           )}
         </div>
 
