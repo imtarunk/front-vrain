@@ -52,6 +52,7 @@ const NewCard = ({ data }) => {
         "http://localhost:3001/api/v1/vrain/share",
         {
           contentId: data._id,
+          status: true, // Set status to true for sharing
         },
         {
           headers: {

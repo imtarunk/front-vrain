@@ -1,6 +1,12 @@
 import { ReactElement, useState } from "react";
 import LogoEmbed from "../icon/logo";
-import { AddIcon, LinkIcon, Logout, SettingIcon } from "../icon/shareicon";
+import {
+  AddIcon,
+  LinkIcon,
+  Logout,
+  SettingIcon,
+  Home,
+} from "../icon/shareicon";
 import axios from "axios";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
@@ -9,7 +15,7 @@ import { Input } from "./input";
 import { Textarea } from "./textarea";
 import { Button } from "./button";
 
-const NewSidebar = () => {
+const NewSidebar = ({ setPage }) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -28,12 +34,25 @@ const NewSidebar = () => {
 
       {/* Sidebar Menu */}
       <div className="w-full mt-6">
+        <SidebarMenu
+          text="Home"
+          icon={<Home />}
+          handleClick={() => setPage("Home")}
+        />
         <button onClick={() => setIsModalOpen(true)} className="w-full">
           <SidebarMenu text="Add content" icon={<AddIcon />} />
         </button>
 
-        <SidebarMenu text="Settings" icon={<SettingIcon />} />
-        <SidebarMenu text="Link" icon={<LinkIcon />} />
+        <SidebarMenu
+          text="Settings"
+          icon={<SettingIcon />}
+          handleClick={() => setPage("Setting")}
+        />
+        <SidebarMenu
+          text="Link"
+          icon={<LinkIcon />}
+          handleClick={() => setPage("Link")}
+        />
       </div>
 
       {/* Logout Button */}
@@ -58,9 +77,12 @@ interface Props {
   icon: ReactElement;
 }
 
-const SidebarMenu = ({ text, icon }: Props) => {
+const SidebarMenu = ({ text, icon, handleClick }: Props) => {
   return (
-    <div className="flex gap-2 p-4 hover:bg-gray-300 w-full cursor-pointer">
+    <div
+      className="flex gap-2 p-4 hover:bg-gray-300 w-full cursor-pointer"
+      onClick={handleClick}
+    >
       {icon}
       <span>{text}</span>
     </div>
