@@ -43,7 +43,7 @@ export default function Layout() {
     };
 
     fetchContent();
-  }, []);
+  }, [content]);
 
   return (
     <div>
@@ -51,7 +51,9 @@ export default function Layout() {
         <AppSidebar />
         <div className="grid grid-cols-4 gap-5 m-4">
           {content.map((item, index) => (
-            <Card key={index} data={item} />
+            <a href={content.link} key={index}>
+              <Card key={index} data={item} />
+            </a>
           ))}
         </div>
 

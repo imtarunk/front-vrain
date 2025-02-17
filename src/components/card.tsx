@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 
 const Card = ({ data }) => {
-  const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState(
+    "https://media.istockphoto.com/id/814423752/photo/eye-of-model-with-colorful-art-make-up-close-up.jpg?s=612x612&w=0&k=20&c=l15OdMWjgCKycMMShP8UK94ELVlEGvt7GmB_esHWPYE="
+  );
 
   useEffect(() => {
     if (!data.link) return;
@@ -18,17 +20,6 @@ const Card = ({ data }) => {
         .then((res) => res.json())
         .then((data) => setPreview(data.html))
         .catch((err) => console.error("Twitter Embed Error:", err));
-    } else {
-      // Fetch Open Graph Data for general links
-      fetch(
-        `https://api.linkpreview.net/?key=731896bcdac735b8a9393d1677cef61f&q=${data.link}`
-      )
-        .then((res) => res.json())
-        .then((data) => setPreview(data.image || generateAITumbnail()))
-        .catch((err) => {
-          console.error("OG Meta Fetch Error:", err);
-          setPreview(generateAITumbnail()); // Set AI-generated image if no image found
-        });
     }
   }, [data.link]);
 
@@ -59,7 +50,9 @@ const Card = ({ data }) => {
             )
           ) : (
             <img
-              src={generateAITumbnail()} // Use AI-generated placeholder
+              src={
+                "https://media.istockphoto.com/id/814423752/photo/eye-of-model-with-colorful-art-make-up-close-up.jpg?s=612x612&w=0&k=20&c=l15OdMWjgCKycMMShP8UK94ELVlEGvt7GmB_esHWPYE="
+              } // Use AI-generated placeholder
               alt="Generated Thumbnail"
               className="w-full h-full object-cover opacity-80"
             />
