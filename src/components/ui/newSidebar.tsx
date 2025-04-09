@@ -14,12 +14,21 @@ import { X } from "lucide-react";
 import { Input } from "./input";
 import { Textarea } from "./textarea";
 import { Button } from "./button";
+import Avater from "../avater";
 
-interface setPage {
-  page?: string;
+type SetPageFunction = (page: string) => void;
+
+interface SidebarProps {
+  setPage: SetPageFunction;
 }
 
-const NewSidebar = ({ setPage }: { setPage: setPage }) => {
+interface SidebarMenuProps {
+  text: string;
+  icon: ReactElement;
+  handleClick?: () => void;
+}
+
+const NewSidebar = ({ setPage }: SidebarProps) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -64,8 +73,8 @@ const NewSidebar = ({ setPage }: { setPage: setPage }) => {
         className="mt-auto mb-4 hover:bg-red-500 hover:text-white flex space-x-2 rounded-md p-3 cursor-pointer w-full justify-center"
         onClick={handleLogout}
       >
+        <Avater />
         <Logout />
-        <span>Logout</span>
       </div>
 
       {/* Add Content Modal */}
@@ -76,12 +85,7 @@ const NewSidebar = ({ setPage }: { setPage: setPage }) => {
   );
 };
 
-interface Props {
-  text: string;
-  icon: ReactElement;
-}
-
-const SidebarMenu = ({ text, icon, handleClick }: Props) => {
+const SidebarMenu = ({ text, icon, handleClick }: SidebarMenuProps) => {
   return (
     <div
       className="flex gap-2 p-4 hover:bg-gray-300 w-full cursor-pointer"

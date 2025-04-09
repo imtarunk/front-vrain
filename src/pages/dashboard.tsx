@@ -4,13 +4,40 @@ import axios from "axios";
 import NewCard from "@/components/newCard";
 import NewSidebar from "@/components/ui/newSidebar";
 import LinkPage from "./LinkPage";
+import { Loader } from "lucide-react";
+
+interface Content {
+  _id: string;
+  title: string;
+  description: string;
+  link: string;
+  image?: string;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface LinkData {
+  _id: string;
+  title: string;
+  link: string;
+  hash: string;
+  status: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  Content?: Content[];
+}
 
 export default function Layout() {
-  const [content, setContent] = useState([]);
+  const [content, setContent] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
-  const [LinkList, setLinkList] = useState([]);
-
-  const [page, setPage] = useState("Home || addContent || Link || setting");
+  const [linkList, setLinkList] = useState<LinkData[]>([]);
+  const [page, setPage] = useState<string>("Home");
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -21,7 +48,7 @@ export default function Layout() {
           return;
         }
 
-        const response = await axios.get(
+        const response = await axios.get<ApiResponse<Content[]>>(
           "http://localhost:3001/api/v1/content",
           {
             headers: {
@@ -32,15 +59,19 @@ export default function Layout() {
 
         console.log("Fetched data:", response.data);
         if (response.status === 200) {
-          setContent(response.data?.Content || []);
+          setContent(response.data.Content || []);
           setLoading(false);
         } else {
           toast("Failed to fetch data");
         }
-      } catch (error) {
+      } catch (error: unknown) {
+        const err = error as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
         console.error(
           "Error fetching content:",
-          error.response?.data || error.message
+          err.response?.data?.message || err.message || "Unknown error"
         );
         toast("Error fetching content");
       }
@@ -51,11 +82,11 @@ export default function Layout() {
 
   useEffect(() => {
     if (page === "Link") {
-      handelLinkList();
+      handleLinkList();
     }
   }, [page]);
 
-  const handelLinkList = async () => {
+  const handleLinkList = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -63,7 +94,7 @@ export default function Layout() {
         return;
       }
 
-      const response = await axios.get(
+      const response = await axios.get<ApiResponse<LinkData[]>>(
         "http://localhost:3001/api/v1/all-links",
         {
           headers: {
@@ -73,50 +104,37 @@ export default function Layout() {
       );
       console.log("This is link data", response.data);
       if (response.status === 200) {
-        toast(response.data?.message);
+        toast(response.data.message || "Links fetched successfully");
         setLinkList(response.data.data);
       } else {
         toast("Failed to fetch links");
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
       console.error(
         "Error fetching links:",
-        error.response?.data || error.message
+        err.response?.data?.message || err.message || "Unknown error"
       );
       toast("Error fetching links");
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center">
+        <Loader />
+      </div>
+    );
   return (
     <div className="flex">
       <NewSidebar setPage={setPage} />
       <div className="ml-72 w-full mr-8">
-        {page === "Link" ? (
-          <h1 className="text-4xl m-4 px-4 text-gray-600">Share links</h1>
-        ) : (
-          <h1 className="text-4xl m-4 px-4 text-gray-600">Notes</h1>
-        )}
-        {page === "Link" ? (
-          <div className="border-1 rounded-sm space-y-2">
-            <div className="container text-center">
-              <div className="row">
-                <div className="col-3 border">Title</div>
-                <div className="col border">Link</div>
-                <div className="col-2 border">Status</div>
-              </div>
-            </div>
-            {LinkList.map((data, index) => (
-              <LinkPage key={index} data={data} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-4 m-4 w-full">
-            {content.map((item) => (
-              <NewCard key={item._id} data={item} />
-            ))}
-          </div>
-        )}
+        {page === "Home" &&
+          content.map((item) => <NewCard key={item._id} data={item} />)}
+        {page === "Link" && <LinkPage data={linkList} />}
       </div>
       <Toaster />
     </div>

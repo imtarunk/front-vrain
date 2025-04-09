@@ -4,6 +4,11 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom"; // For redirection
 
+interface AuthResponse {
+  token: string;
+  message?: string;
+}
+
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState<string>("");
@@ -20,11 +25,14 @@ const AuthPage = () => {
         ? "http://localhost:3001/api/v1/signin"
         : "http://localhost:3001/api/v1/signup";
 
-      const response = await axios.post(url, { username, password });
+      const response = await axios.post<AuthResponse>(url, {
+        username,
+        password,
+      });
 
       if (response.status === 200) {
         if (isLogin) {
-          localStorage.setItem("token", response.data?.token);
+          localStorage.setItem("token", response.data.token);
           toast.success("Login Successful!");
           navigate("/dashboard"); // Redirect to home
         } else {
@@ -34,9 +42,13 @@ const AuthPage = () => {
       } else {
         toast.error("Invalid Credentials!");
       }
-    } catch (error: any) {
-      console.error("Error:", error.response?.data || error.message);
-      toast.error(error.response?.data?.message || "Something went wrong!");
+    } catch (error: unknown) {
+      const err = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      console.error("Error:", err.response?.data?.message || err.message);
+      toast.error(err.response?.data?.message || "Something went wrong!");
     } finally {
       setLoading(false); // Stop loader
     }

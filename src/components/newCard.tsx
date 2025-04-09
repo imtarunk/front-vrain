@@ -27,7 +27,7 @@ const NewCard = ({ data }: { data: Data }) => {
         data.link.split("v=")[1]?.split("&")[0] ||
         data.link.split("youtu.be/")[1];
       setPreview(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
-    } else if (data.link.includes("twitter.com")) {
+    } else if (data.link.includes("x.com")) {
       // Twitter embeds may require authentication or additional CORS handling
       fetch(`https://publish.x.com/oembed?url=${data.link}`)
         .then((res) => res.json())
@@ -114,7 +114,7 @@ const NewCard = ({ data }: { data: Data }) => {
               <img
                 src={preview}
                 alt="Preview"
-                className="w-full h-40 object-cover  rounded-md"
+                className="w-full h-40 object-cover rounded-md"
               />
             </a>
           ) : (
