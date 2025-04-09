@@ -15,6 +15,7 @@ import { Input } from "./input";
 import { Textarea } from "./textarea";
 import { Button } from "./button";
 import Avater from "../avater";
+import { backendURL } from "@/lib/utils";
 
 type SetPageFunction = (page: string) => void;
 
@@ -158,7 +159,7 @@ export function ModalForm({ isOpen, setIsOpen }: ModalFormProps) {
       }
 
       const response = await axios.post(
-        "http://localhost:3001/api/v1/content",
+        `${backendURL}/api/v1/content`,
         { title, link, description, type: contentType },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
