@@ -5,6 +5,7 @@ import NewCard from "@/components/newCard";
 import NewSidebar from "@/components/ui/newSidebar";
 import LinkPage from "./LinkPage";
 import { Loader } from "lucide-react";
+import { backendURL } from "@/lib/utils";
 
 interface Content {
   _id: string;
@@ -49,7 +50,7 @@ export default function Layout() {
         }
 
         const response = await axios.get<ApiResponse<Content[]>>(
-          "http://localhost:3001/api/v1/content",
+          `${backendURL}/api/v1/content`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -95,7 +96,7 @@ export default function Layout() {
       }
 
       const response = await axios.get<ApiResponse<LinkData[]>>(
-        "http://localhost:3001/api/v1/all-links",
+        `${backendURL}/api/v1/all-links`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

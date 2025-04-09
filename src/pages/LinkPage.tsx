@@ -1,3 +1,4 @@
+import { backendURL } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 interface LinkData {
@@ -26,7 +27,7 @@ export const LinkPage = ({ data }: LinkPageProps) => {
             onClick={async () => {
               const url = JSON.stringify(item.hash).replace(/"/g, "");
               await navigator.clipboard.writeText(
-                `http://localhost:3001/api/v1/vrain/${url}`
+                `${backendURL}/api/v1/vrain/${url}`
               );
               toast.success(`Link copied`, {
                 position: "bottom-center",

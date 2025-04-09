@@ -3,6 +3,7 @@ import AnimatedBackground from "../components/ui/background";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom"; // For redirection
+import { backendURL } from "@/lib/utils";
 
 interface AuthResponse {
   token: string;
@@ -22,8 +23,8 @@ const AuthPage = () => {
 
     try {
       const url = isLogin
-        ? "http://localhost:3001/api/v1/signin"
-        : "http://localhost:3001/api/v1/signup";
+        ? `${backendURL}/api/v1/signin`
+        : `${backendURL}/api/v1/signup`;
 
       const response = await axios.post<AuthResponse>(url, {
         username,
