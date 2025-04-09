@@ -59,7 +59,7 @@ const NewCard = ({ data }: { data: Data }) => {
       }
 
       const response = await axios.post(
-        "http://localhost:3001/api/v1/vrain/share",
+        `${backendURL}/api/v1/vrain/share`,
         {
           contentId: data._id,
           status: true, // Set status to true for sharing
