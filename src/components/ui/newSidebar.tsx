@@ -26,11 +26,13 @@ interface SidebarMenuProps {
   text: string;
   icon: ReactElement;
   handleClick?: () => void;
+  active?: boolean;
 }
 
 const NewSidebar = ({ setPage }: SidebarProps) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activePage, setActivePage] = useState("Home");
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -38,43 +40,69 @@ const NewSidebar = ({ setPage }: SidebarProps) => {
     navigate("/");
   };
 
+  const handlePageChange = (page: string) => {
+    setActivePage(page);
+    setPage(page);
+  };
+
   return (
-    <div className="border-r-2 border-gray-400 h-screen w-60 flex flex-col items-center fixed">
-      {/* Centered Logo */}
-      <div className="flex justify-center w-full mt-4">
+    <div className="h-screen w-64 bg-gray-50 border-r border-gray-200 flex flex-col fixed shadow-sm">
+      {/* Logo Section */}
+      <div className="flex items-center justify-center py-6 border-b border-gray-200">
         <LogoEmbed />
       </div>
 
-      {/* Sidebar Menu */}
-      <div className="w-full mt-6">
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         <SidebarMenu
           text="Home"
           icon={<Home />}
-          handleClick={() => setPage("Home")}
+          handleClick={() => handlePageChange("Home")}
+          active={activePage === "Home"}
         />
-        <button onClick={() => setIsModalOpen(true)} className="w-full">
-          <SidebarMenu text="Add content" icon={<AddIcon />} />
-        </button>
-
+        <SidebarMenu
+          text="Links"
+          icon={<LinkIcon />}
+          handleClick={() => handlePageChange("Link")}
+          active={activePage === "Link"}
+        />
         <SidebarMenu
           text="Settings"
           icon={<SettingIcon />}
-          handleClick={() => setPage("Setting")}
+          handleClick={() => handlePageChange("Setting")}
+          active={activePage === "Setting"}
         />
-        <SidebarMenu
-          text="Link"
-          icon={<LinkIcon />}
-          handleClick={() => setPage("Link")}
-        />
+      </nav>
+
+      {/* Action Button */}
+      <div className="px-4 py-3">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium shadow-sm"
+        >
+          <AddIcon />
+          <span>Add Content</span>
+        </button>
       </div>
 
-      {/* Logout Button */}
-      <div
-        className="mt-auto mb-4 hover:bg-red-500 hover:text-white flex space-x-2 rounded-md p-3 cursor-pointer w-full justify-center"
-        onClick={handleLogout}
-      >
-        <Avater />
-        <Logout />
+      {/* User Profile & Logout */}
+      <div className="border-t border-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Avater />
+            <div>
+              <p className="text-sm font-medium text-gray-700">User Profile</p>
+              <p className="text-xs text-gray-500">Manage account</p>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-full hover:bg-red-100 text-red-500 transition-colors duration-200"
+            title="Logout"
+          >
+            <Logout />
+          </button>
+        </div>
       </div>
 
       {/* Add Content Modal */}
@@ -85,15 +113,27 @@ const NewSidebar = ({ setPage }: SidebarProps) => {
   );
 };
 
-const SidebarMenu = ({ text, icon, handleClick }: SidebarMenuProps) => {
+const SidebarMenu = ({
+  text,
+  icon,
+  handleClick,
+  active = false,
+}: SidebarMenuProps) => {
   return (
-    <div
-      className="flex gap-2 p-4 hover:bg-gray-300 w-full cursor-pointer"
+    <button
+      className={`flex items-center w-full px-3 py-3 rounded-lg transition-colors duration-200 ${
+        active ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100"
+      }`}
       onClick={handleClick}
     >
-      {icon}
-      <span>{text}</span>
-    </div>
+      <div className={`mr-3 ${active ? "text-blue-700" : "text-gray-500"}`}>
+        {icon}
+      </div>
+      <span className="font-medium">{text}</span>
+      {active && (
+        <div className="ml-auto w-1.5 h-6 bg-blue-600 rounded-full"></div>
+      )}
+    </button>
   );
 };
 
@@ -108,10 +148,15 @@ export function ModalForm({ isOpen, setIsOpen }: ModalFormProps) {
   const [title, setTitle] = useState("");
   const [link, setLink] = useState("");
   const [description, setDescription] = useState("");
-  const [contentType, setContentType] = useState(""); // New state for content type
+  const [contentType, setContentType] = useState("image");
 
   const handleAddContent = async () => {
     try {
+      if (!title || !link) {
+        toast.error("Title and link are required");
+        return;
+      }
+
       const response = await axios.post(
         "http://localhost:3001/api/v1/content",
         { title, link, description, type: contentType },
@@ -119,10 +164,15 @@ export function ModalForm({ isOpen, setIsOpen }: ModalFormProps) {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-      console.log(contentType);
+
       if (response.status === 201) {
         toast.success("Content Added Successfully");
         setIsOpen(false);
+        // Reset form
+        setTitle("");
+        setLink("");
+        setDescription("");
+        setContentType("image");
       } else {
         toast.error("Failed to add content");
       }
@@ -134,70 +184,97 @@ export function ModalForm({ isOpen, setIsOpen }: ModalFormProps) {
 
   return (
     isOpen && (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm z-50 ">
-        <div className="bg-gray-800 p-6 rounded-2xl shadow-lg w-96 text-white relative z-60">
-          <button
-            className="absolute top-3 right-3 text-gray-400 hover:text-white"
-            onClick={() => setIsOpen(false)}
-          >
-            <X size="24px" />
-          </button>
-          <h2 className="text-xl font-semibold mb-4">Add Content</h2>
-
-          {/* Title Input */}
-          <div className="mb-3 text-black">
-            <label className="block text-gray-300 mb-1">Title</label>
-            <Input
-              type="text"
-              placeholder="Enter title"
-              className="w-full p-2 rounded-md"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          {/* Link Input */}
-          <div className="mb-3 text-black">
-            <label className="block text-gray-300 mb-1">Link</label>
-            <Input
-              type="text"
-              placeholder="Enter link"
-              className="w-full p-2 rounded-md"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-            />
-          </div>
-
-          {/* Content Type Selection */}
-          <div className="mb-3">
-            <label className="block text-gray-300 mb-1">Content Type</label>
-            <select
-              className="w-full p-2 rounded-md bg-gray-700 text-white"
-              value={contentType}
-              onChange={(e) => setContentType(e.target.value)}
+      <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+        <div
+          className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-300"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-800">
+              Add New Content
+            </h2>
+            <button
+              className="text-gray-400 hover:text-gray-600 focus:outline-none rounded-full p-1 hover:bg-gray-100 transition-colors"
+              onClick={() => setIsOpen(false)}
             >
-              <option value="image">Image</option>
-              <option value="video">Video</option>
-              <option value="article">Article</option>
-              <option value="audio">Audio</option>
-            </select>
+              <X size={20} />
+            </button>
           </div>
 
-          {/* Description Textarea */}
-          <div className="mb-3 text-black">
-            <label className="block text-gray-300 mb-1">Description</label>
-            <Textarea
-              placeholder="Enter description"
-              className="w-full p-2 rounded-md"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+          {/* Form Content */}
+          <div className="px-6 py-4">
+            {/* Title Input */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Title
+              </label>
+              <Input
+                type="text"
+                placeholder="Enter content title"
+                className="w-full"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            {/* Link Input */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Link
+              </label>
+              <Input
+                type="text"
+                placeholder="https://example.com/content"
+                className="w-full"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+              />
+            </div>
+
+            {/* Content Type Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Content Type
+              </label>
+              <select
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={contentType}
+                onChange={(e) => setContentType(e.target.value)}
+              >
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+                <option value="article">Article</option>
+                <option value="audio">Audio</option>
+              </select>
+            </div>
+
+            {/* Description Textarea */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <Textarea
+                placeholder="Enter a brief description"
+                className="w-full min-h-[100px]"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Add Content Button */}
-          <Button className="w-full mt-2 border-2" onClick={handleAddContent}>
-            Add Content
-          </Button>
+          {/* Footer */}
+          <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <button
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              onClick={() => setIsOpen(false)}
+            >
+              Cancel
+            </button>
+            <Button onClick={handleAddContent} className="px-4 py-2">
+              Add Content
+            </Button>
+          </div>
         </div>
       </div>
     )

@@ -46,6 +46,7 @@ export default function Layout() {
         const token = localStorage.getItem("token");
         if (!token) {
           console.error("No token found in localStorage");
+          setLoading(false);
           return;
         }
 
@@ -58,12 +59,10 @@ export default function Layout() {
           }
         );
 
-        console.log("Fetched data:", response.data);
         if (response.status === 200) {
           setContent(response.data.Content || []);
-          setLoading(false);
         } else {
-          toast("Failed to fetch data");
+          toast.error("Failed to fetch data");
         }
       } catch (error: unknown) {
         const err = error as {
@@ -74,7 +73,9 @@ export default function Layout() {
           "Error fetching content:",
           err.response?.data?.message || err.message || "Unknown error"
         );
-        toast("Error fetching content");
+        toast.error("Error fetching content");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -103,12 +104,12 @@ export default function Layout() {
           },
         }
       );
-      console.log("This is link data", response.data);
+
       if (response.status === 200) {
-        toast(response.data.message || "Links fetched successfully");
+        toast.success(response.data.message || "Links fetched successfully");
         setLinkList(response.data.data);
       } else {
-        toast("Failed to fetch links");
+        toast.error("Failed to fetch links");
       }
     } catch (error: unknown) {
       const err = error as {
@@ -119,25 +120,60 @@ export default function Layout() {
         "Error fetching links:",
         err.response?.data?.message || err.message || "Unknown error"
       );
-      toast("Error fetching links");
+      toast.error("Error fetching links");
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex justify-center items-center">
-        <Loader />
+      <div className="flex justify-center items-center h-screen">
+        <Loader className="animate-spin w-8 h-8 text-blue-500" />
       </div>
     );
+  }
+
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-gray-50">
       <NewSidebar setPage={setPage} />
-      <div className="ml-72 w-full mr-8">
-        {page === "Home" &&
-          content.map((item) => <NewCard key={item._id} data={item} />)}
+
+      <div className="ml-72 p-6 flex-1">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">
+            {page === "Home" ? "My Content" : "Shared Links"}
+          </h1>
+          <p className="text-gray-500">
+            {page === "Home"
+              ? `Showing ${content.length} saved items`
+              : `Showing ${linkList.length} shared links`}
+          </p>
+        </div>
+
+        {page === "Home" && (
+          <>
+            {content.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-10 text-center bg-white rounded-lg shadow">
+                <div className="text-gray-400 text-6xl mb-4">📚</div>
+                <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                  No content saved yet
+                </h2>
+                <p className="text-gray-500">
+                  Save your first content to get started!
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {content.map((item) => (
+                  <NewCard key={item._id} data={item} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
         {page === "Link" && <LinkPage data={linkList} />}
       </div>
-      <Toaster />
+
+      <Toaster position="top-right" />
     </div>
   );
 }

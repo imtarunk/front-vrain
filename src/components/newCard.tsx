@@ -2,6 +2,7 @@ import axios from "axios";
 import { ShareIcon, DeleteIcon } from "../components/icon/shareicon";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { backendURL } from "@/lib/utils";
 
 // Interface for type safety
 interface Data {
@@ -49,12 +50,11 @@ const NewCard = ({ data }: { data: Data }) => {
   }, [data?.link]); // Added optional chaining to prevent crashes
 
   const handleShareLink = async () => {
-    console.log("clicked");
     try {
       const token = localStorage.getItem("token"); // Get token from localStorage
 
       if (!token) {
-        console.error("No token found in localStorage");
+        toast.error("Please login to share content");
         return;
       }
 
@@ -71,18 +71,42 @@ const NewCard = ({ data }: { data: Data }) => {
         }
       );
 
-      console.log(data._id);
-      console.log(response);
-
       if (response.status === 200) {
-        //@ts-ignore
-        toast(response.data?.message || "Content shared successfully!");
+        //@ts-ignore=
+        toast.success(response.data?.message || "Content shared successfully!");
       } else {
         toast.error("Failed to share content");
       }
     } catch (e) {
-      console.error("Error occurred:", e); // Log more detailed error if available
+      console.error("Error occurred:", e);
+      toast.error("Failed to share content");
     }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        toast.error("Please login to delete content");
+        return;
+      }
+
+      await axios.delete(`${backendURL}/api/v1/delete/${data._id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success("Content deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting content:", error);
+      toast.error("Failed to delete content");
+    }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(data.link);
+    toast.success("Link copied to clipboard");
   };
 
   // Truncate Description to 20 Words
@@ -91,42 +115,83 @@ const NewCard = ({ data }: { data: Data }) => {
       (data.description.split(" ").length > 20 ? "..." : "")
     : "No description available.";
 
-  return (
-    <div>
-      <div className="border-2 border-gray-400 min-h-72 w-60 rounded-xl p-1 shadow-lg">
-        {/* Header */}
-        <div className="flex justify-between p-1 items-center">
-          <h1 className="w-full m-1 text-lg font-semibold">
-            {data?.title || "Untitled"}
-          </h1>
-          <div className="flex justify-end gap-1">
-            <div onClick={handleShareLink}>
-              <ShareIcon />
-            </div>
-            <DeleteIcon />
-          </div>
-        </div>
+  // Format tags for display
+  const displayTags = data?.tags?.length
+    ? data.tags.map((tag) => `#${tag}`).join(" ")
+    : "No tags";
 
+  return (
+    <div className="m-4 transform transition-all duration-300 hover:scale-105">
+      <div className="border border-gray-200 bg-white min-h-72 w-64 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
         {/* Preview Section */}
-        <div className="w-full p-2 flex-wrap">
+        <div className="w-full h-40 bg-gray-100 overflow-hidden">
           {typeof preview === "string" ? (
-            <a href={data.link} target="_blank" rel="noopener noreferrer">
+            <a
+              href={data.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full h-full"
+            >
               <img
                 src={preview}
-                alt="Preview"
-                className="w-full h-40 object-cover rounded-md"
+                alt={data?.title || "Preview"}
+                className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
               />
             </a>
           ) : (
-            <div dangerouslySetInnerHTML={{ __html: preview }} />
+            <div
+              className="w-full h-full"
+              dangerouslySetInnerHTML={{ __html: preview }}
+            />
           )}
         </div>
 
-        {/* Description */}
-        <div className="p-2 text-sm text-left break-words">
-          {truncatedDescription}
+        {/* Content Container */}
+        <div className="p-3">
+          {/* Header with Title and Actions */}
+          <div className="flex justify-between items-start mb-2">
+            <h1
+              className="text-lg font-semibold text-gray-800 line-clamp-1"
+              title={data?.title || "Untitled"}
+            >
+              {data?.title || "Untitled"}
+            </h1>
+            <div className="flex gap-2 ml-2">
+              <button
+                onClick={handleCopyLink}
+                className="text-gray-500 hover:text-blue-500 transition-colors duration-200"
+                title="Copy link"
+              >
+                <ShareIcon />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="text-gray-500 hover:text-red-500 transition-colors duration-200"
+                title="Delete"
+              >
+                <DeleteIcon />
+              </button>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="text-sm text-gray-600 mb-3 line-clamp-3">
+            {truncatedDescription}
+          </div>
+
+          {/* Tags */}
+          <div className="text-xs text-blue-500 italic">{displayTags}</div>
         </div>
-        <div className="text-xs p-2">...tags</div>
+
+        {/* Share Button */}
+        <div className="px-3 pb-3">
+          <button
+            onClick={handleShareLink}
+            className="w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-200 text-sm font-medium flex items-center justify-center"
+          >
+            Share Content
+          </button>
+        </div>
       </div>
     </div>
   );
