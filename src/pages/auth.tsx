@@ -36,7 +36,7 @@ const AuthPage = () => {
         if (isLogin) {
           localStorage.setItem("token", response.data.token);
           toast.success("Login Successful!");
-          navigate("/landing"); // Redirect to landing page after successful login
+          navigate("/dashboard"); // Redirect to landing page after successful login
         } else {
           toast.success("Signup Successful! Please login.");
           setIsLogin(true);
