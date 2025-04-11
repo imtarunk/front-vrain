@@ -1,16 +1,17 @@
-import Layout from "./pages/dashboard";
-import AuthLayout from "./pages/auth";
-import { Routes, Route } from "react-router";
-import NotFound from "./pages/invalidPage";
-import LandingPage from "./pages/landingpage";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Dashboard from "./pages/dashboard";
+import AuthPage from "./pages/auth";
+import NotePage from "./pages/NotePage";
 
-export default function App() {
+function App() {
   return (
     <Routes>
-      <Route path="/login" element={<AuthLayout />} />
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/dashboard" element={<Layout />} />
-      <Route path="/*" element={<NotFound />} />
+      <Route path="/" element={<Navigate to="/auth" replace />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/notes/:id" element={<NotePage />} />
     </Routes>
   );
 }
+
+export default App;

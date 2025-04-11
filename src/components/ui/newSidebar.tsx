@@ -1,4 +1,4 @@
-import { ReactElement, useState } from "react";
+import React, { ReactElement, useState, useEffect } from "react";
 import LogoEmbed from "../icon/logo";
 import {
   AddIcon,
@@ -6,16 +6,33 @@ import {
   Logout,
   SettingIcon,
   Home,
+  FileText,
 } from "../icon/shareicon";
 import axios from "axios";
 import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
-import { X } from "lucide-react";
+import { X, Search, ChevronRight, Calendar, Bookmark } from "lucide-react";
 import { Input } from "./input";
 import { Textarea } from "./textarea";
 import { Button } from "./button";
 import Avater from "../avater";
+import NoteEditor from "../NoteEditor";
 import { backendURL } from "@/lib/utils";
+
+interface Note {
+  _id: string;
+  title: string;
+  content: string;
+  tags: string[];
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface NotesResponse {
+  notes: Note[];
+  sharedNotes: Note[];
+}
 
 type SetPageFunction = (page: string) => void;
 
@@ -25,15 +42,47 @@ interface SidebarProps {
 
 interface SidebarMenuProps {
   text: string;
-  icon: ReactElement;
-  handleClick?: () => void;
+  icon: ReactElement<{ size?: number; className?: string }>;
   active?: boolean;
+  handleClick?: () => void;
 }
 
-const NewSidebar = ({ setPage }: SidebarProps) => {
+const ModernSidebar = ({ setPage }: SidebarProps) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [recentNotes, setRecentNotes] = useState<Note[]>([]);
   const [activePage, setActivePage] = useState("Home");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    fetchRecentNotes();
+
+    // Check for saved state
+    const savedCollapsedState = localStorage.getItem("sidebarCollapsed");
+    if (savedCollapsedState) {
+      setIsCollapsed(JSON.parse(savedCollapsedState));
+    }
+
+    // Responsive handling
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setIsCollapsed(true);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const toggleSidebar = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    localStorage.setItem("sidebarCollapsed", JSON.stringify(newState));
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -46,63 +95,206 @@ const NewSidebar = ({ setPage }: SidebarProps) => {
     setPage(page);
   };
 
+  const fetchRecentNotes = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await axios.get<NotesResponse>(
+        `${backendURL}/api/v1/notes`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setRecentNotes(response.data.notes || []);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+    }
+  };
+
+  const filteredNotes = recentNotes.filter((note) =>
+    note.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="h-screen w-64 bg-gray-50 border-r border-gray-200 flex flex-col fixed shadow-sm">
-      {/* Logo Section */}
-      <div className="flex items-center justify-center py-6 border-b border-gray-200">
-        <LogoEmbed />
-      </div>
+    <>
+      {/* Sidebar Toggle Button (Mobile) */}
+      <button
+        className={`fixed top-4 ${
+          isCollapsed ? "left-4" : "hidden"
+        } z-20 md:hidden bg-white p-2 rounded-full shadow-lg`}
+        onClick={toggleSidebar}
+      >
+        <ChevronRight size={20} className={isCollapsed ? "" : "rotate-180"} />
+      </button>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        <SidebarMenu
-          text="Home"
-          icon={<Home />}
-          handleClick={() => handlePageChange("Home")}
-          active={activePage === "Home"}
-        />
-        <SidebarMenu
-          text="Links"
-          icon={<LinkIcon />}
-          handleClick={() => handlePageChange("Link")}
-          active={activePage === "Link"}
-        />
-        <SidebarMenu
-          text="Settings"
-          icon={<SettingIcon />}
-          handleClick={() => handlePageChange("Setting")}
-          active={activePage === "Setting"}
-        />
-      </nav>
-
-      {/* Action Button */}
-      <div className="px-4 py-3">
+      <div
+        className={`transition-all duration-300 border-r border-gray-200 h-screen 
+        ${isCollapsed ? "w-16" : "w-64"} flex flex-col fixed left-0 top-0 z-10 
+        bg-white shadow-sm transform ${
+          isCollapsed && window.innerWidth < 768
+            ? "-translate-x-full"
+            : "translate-x-0"
+        }`}
+      >
+        {/* Collapse/Expand Button (Desktop) */}
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium shadow-sm"
+          className="absolute -right-3 top-20 hidden md:flex h-6 w-6 bg-white rounded-full border border-gray-200 shadow-sm items-center justify-center"
+          onClick={toggleSidebar}
         >
-          <AddIcon />
-          <span>Add Content</span>
+          <ChevronRight size={14} className={isCollapsed ? "" : "rotate-180"} />
         </button>
-      </div>
 
-      {/* User Profile & Logout */}
-      <div className="border-t border-gray-200 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Avater />
-            <div>
-              <p className="text-sm font-medium text-gray-700">User Profile</p>
-              <p className="text-xs text-gray-500">Manage account</p>
+        {/* Logo Section */}
+        <div
+          className={`flex items-center justify-center py-6 ${
+            isCollapsed ? "px-2" : "px-4"
+          }`}
+        >
+          <div
+            className={`${
+              isCollapsed ? "scale-75" : ""
+            } transition-transform duration-300`}
+          >
+            <LogoEmbed />
+          </div>
+        </div>
+
+        {/* Search Bar - Only visible when expanded */}
+        {!isCollapsed && (
+          <div className="px-4 mb-4">
+            <div className="relative">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
+              <input
+                type="text"
+                placeholder="Search notes..."
+                className="w-full pl-9 pr-3 py-2 text-sm bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="p-2 rounded-full hover:bg-red-100 text-red-500 transition-colors duration-200"
-            title="Logout"
+        )}
+
+        {/* Main Navigation */}
+        <div className="mt-2 flex-grow overflow-y-auto">
+          <div className="space-y-1">
+            <SidebarMenu
+              text="Home"
+              icon={<Home />}
+              active={activePage === "Home"}
+              handleClick={() => handlePageChange("Home")}
+            />
+            <button
+              onClick={() => setIsNoteModalOpen(true)}
+              className="w-full text-left"
+            >
+              <SidebarMenu text="New Note" icon={<FileText />} active={false} />
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="w-full text-left"
+            >
+              <SidebarMenu
+                text="Add Content"
+                icon={<AddIcon />}
+                active={false}
+              />
+            </button>
+            <SidebarMenu
+              text="Calendar"
+              icon={<Calendar />}
+              active={activePage === "Calendar"}
+              handleClick={() => handlePageChange("Calendar")}
+            />
+            <SidebarMenu
+              text="Links"
+              icon={<LinkIcon />}
+              active={activePage === "Link"}
+              handleClick={() => handlePageChange("Link")}
+            />
+            <SidebarMenu
+              text="Settings"
+              icon={<SettingIcon />}
+              active={activePage === "Setting"}
+              handleClick={() => handlePageChange("Setting")}
+            />
+          </div>
+
+          {/* Recent Notes Section - Only visible when expanded */}
+          {!isCollapsed && (
+            <div className="mt-8 px-3">
+              <h3 className="text-xs uppercase font-semibold text-gray-500 tracking-wider mx-3 mb-3">
+                Recent Notes
+              </h3>
+              <div className="space-y-0.5">
+                {filteredNotes.length > 0 ? (
+                  filteredNotes.map((note) => (
+                    <div
+                      key={note._id}
+                      className="flex items-start gap-2 px-3 py-2 hover:bg-gray-100 rounded-md cursor-pointer transition-colors group"
+                      onClick={() => {
+                        handlePageChange("Note");
+                        // You might want to set active note ID here as well
+                      }}
+                    >
+                      <Bookmark
+                        size={14}
+                        className="mt-1 text-gray-400 flex-shrink-0"
+                      />
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-medium truncate">
+                          {note.title}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(note.updatedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : searchQuery ? (
+                  <p className="text-xs text-gray-500 px-3">No notes found</p>
+                ) : (
+                  <p className="text-xs text-gray-500 px-3">No recent notes</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* User Profile & Logout */}
+        <div className="mt-auto border-t border-gray-200">
+          <div
+            className={`flex items-center ${
+              isCollapsed ? "justify-center p-3" : "px-4 py-3"
+            } cursor-pointer hover:bg-gray-100 transition-colors`}
           >
-            <Logout />
-          </button>
+            {isCollapsed ? (
+              <div onClick={handleLogout}>
+                <Avater />
+              </div>
+            ) : (
+              <>
+                <Avater />
+                <div className="ml-3 flex-grow">
+                  <p className="text-sm font-medium">User Name</p>
+                  <p className="text-xs text-gray-500">user@example.com</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 hover:bg-red-100 hover:text-red-600 rounded-md transition-colors"
+                >
+                  <Logout />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -110,35 +302,59 @@ const NewSidebar = ({ setPage }: SidebarProps) => {
       {isModalOpen && (
         <ModalForm isOpen={isModalOpen} setIsOpen={setIsModalOpen} />
       )}
-    </div>
+
+      {/* New Note Modal */}
+      {isNoteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full h-full md:w-3/4 md:h-3/4 overflow-auto">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-xl font-semibold">New Note</h2>
+              <button
+                onClick={() => setIsNoteModalOpen(false)}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <NoteEditor
+              onSave={() => {
+                setIsNoteModalOpen(false);
+                fetchRecentNotes();
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
 const SidebarMenu = ({
   text,
   icon,
-  handleClick,
   active = false,
+  handleClick,
 }: SidebarMenuProps) => {
+  const isCollapsed = window.innerWidth < 768;
+
   return (
-    <button
-      className={`flex items-center w-full px-3 py-3 rounded-lg transition-colors duration-200 ${
-        active ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100"
+    <div
+      className={`flex items-center ${
+        isCollapsed ? "justify-center mx-2 p-3" : "px-3 py-2.5 mx-2"
+      } rounded-md cursor-pointer transition-all ${
+        active ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-100"
       }`}
       onClick={handleClick}
     >
-      <div className={`mr-3 ${active ? "text-blue-700" : "text-gray-500"}`}>
-        {icon}
+      <div className={active ? "text-blue-600" : "text-gray-500"}>
+        {React.cloneElement(icon, { size: isCollapsed ? 20 : 18 })}
       </div>
-      <span className="font-medium">{text}</span>
-      {active && (
-        <div className="ml-auto w-1.5 h-6 bg-blue-600 rounded-full"></div>
-      )}
-    </button>
+      {!isCollapsed && <span className="ml-3 text-sm">{text}</span>}
+    </div>
   );
 };
 
-export default NewSidebar;
+export default ModernSidebar;
 
 interface ModalFormProps {
   isOpen: boolean;

@@ -1,56 +1,70 @@
 import toast, { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import NewCard from "@/components/newCard";
 import NewSidebar from "@/components/ui/newSidebar";
 import LinkPage from "./LinkPage";
 import { Loader } from "lucide-react";
 import { backendURL } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import NoteCard from "@/components/NoteCard";
+import ContentCard from "@/components/ContentCard";
+import { Note, Card, LinkData } from "@/types";
 
-interface Content {
-  _id: string;
-  title: string;
-  description: string;
-  link: string;
-  image?: string;
-  tags?: string[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-interface LinkData {
-  _id: string;
-  title: string;
-  link: string;
-  hash: string;
-  status: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-interface ApiResponse<T> {
-  data: T;
+interface NotesResponse {
+  notes: Note[];
   message?: string;
-  Content?: Content[];
+}
+
+interface ContentResponse {
+  Content: Card[];
+  message?: string;
+}
+
+interface LinksResponse {
+  data: LinkData[];
+  message?: string;
+}
+
+interface ApiError {
+  response?: {
+    status: number;
+    data: {
+      message: string;
+    };
+  };
 }
 
 export default function Layout() {
-  const [content, setContent] = useState<Content[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [linkList, setLinkList] = useState<LinkData[]>([]);
   const [page, setPage] = useState<string>("Home");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchContent = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
           console.error("No token found in localStorage");
           setLoading(false);
+          navigate("/auth");
           return;
         }
 
-        const response = await axios.get<ApiResponse<Content[]>>(
+        // Fetch notes
+        const notesResponse = await axios.get<NotesResponse>(
+          `${backendURL}/api/v1/notes`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        console.log(notesResponse.data);
+        // Fetch cards
+        const cardsResponse = await axios.get<ContentResponse>(
           `${backendURL}/api/v1/content`,
           {
             headers: {
@@ -59,28 +73,29 @@ export default function Layout() {
           }
         );
 
-        if (response.status === 200) {
-          setContent(response.data.Content || []);
-        } else {
-          toast.error("Failed to fetch data");
+        if (notesResponse.data && notesResponse.data.notes) {
+          setNotes(notesResponse.data.notes);
+        }
+        if (cardsResponse.data && cardsResponse.data.Content) {
+          setCards(cardsResponse.data.Content);
         }
       } catch (error: unknown) {
-        const err = error as {
-          response?: { data?: { message?: string } };
-          message?: string;
-        };
-        console.error(
-          "Error fetching content:",
-          err.response?.data?.message || err.message || "Unknown error"
-        );
-        toast.error("Error fetching content");
+        console.error("Error fetching data:", error);
+        const apiError = error as ApiError;
+        if (apiError.response?.status === 401) {
+          toast.error("Session expired. Please login again.");
+          localStorage.removeItem("token");
+          navigate("/auth");
+        } else {
+          toast.error(apiError.response?.data.message || "Error fetching data");
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchContent();
-  }, []);
+    fetchData();
+  }, [navigate]);
 
   useEffect(() => {
     if (page === "Link") {
@@ -93,10 +108,11 @@ export default function Layout() {
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("No token found in localStorage");
+        navigate("/auth");
         return;
       }
 
-      const response = await axios.get<ApiResponse<LinkData[]>>(
+      const response = await axios.get<LinksResponse>(
         `${backendURL}/api/v1/all-links`,
         {
           headers: {
@@ -105,23 +121,25 @@ export default function Layout() {
         }
       );
 
-      if (response.status === 200) {
-        toast.success(response.data.message || "Links fetched successfully");
+      if (response.data && response.data.data) {
         setLinkList(response.data.data);
-      } else {
-        toast.error("Failed to fetch links");
+        toast.success(response.data.message || "Links fetched successfully");
       }
     } catch (error: unknown) {
-      const err = error as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-      console.error(
-        "Error fetching links:",
-        err.response?.data?.message || err.message || "Unknown error"
-      );
-      toast.error("Error fetching links");
+      console.error("Error fetching links:", error);
+      const apiError = error as ApiError;
+      if (apiError.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/auth");
+      } else {
+        toast.error(apiError.response?.data.message || "Error fetching links");
+      }
     }
+  };
+
+  const handleCardClick = (link: string) => {
+    window.open(link, "_blank");
   };
 
   if (loading) {
@@ -136,35 +154,61 @@ export default function Layout() {
     <div className="flex min-h-screen bg-gray-50">
       <NewSidebar setPage={setPage} />
 
-      <div className="ml-72 p-6 flex-1">
+      <div className="flex-1 p-4 md:p-6 lg:ml-72">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">
             {page === "Home" ? "My Content" : "Shared Links"}
           </h1>
           <p className="text-gray-500">
             {page === "Home"
-              ? `Showing ${content.length} saved items`
+              ? `Showing ${notes.length + cards.length} items`
               : `Showing ${linkList.length} shared links`}
           </p>
         </div>
 
         {page === "Home" && (
           <>
-            {content.length === 0 ? (
+            {notes.length === 0 && cards.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-10 text-center bg-white rounded-lg shadow">
                 <div className="text-gray-400 text-6xl mb-4">📚</div>
                 <h2 className="text-xl font-semibold text-gray-700 mb-2">
-                  No content saved yet
+                  No content yet
                 </h2>
                 <p className="text-gray-500">
-                  Save your first content to get started!
+                  Create your first note or add content to get started!
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {content.map((item) => (
-                  <NewCard key={item._id} data={item} />
-                ))}
+              <div className="space-y-8">
+                {/* Notes Section */}
+                {notes.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                      Notes
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                      {notes.map((note) => (
+                        <NoteCard key={note._id} note={note} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Cards Section */}
+                {cards.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                      Saved Content
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                      {cards.map((card) => (
+                        <div key={card._id} className="w-full">
+                          <ContentCard data={card} onClick={handleCardClick} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>
