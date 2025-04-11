@@ -6,8 +6,10 @@ import {
   Search,
   Users,
 } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export default function Home() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-white font-sans">
       {/* Navigation */}
@@ -30,14 +32,11 @@ export default function Home() {
           </a>
         </div>
         <div className="flex items-center space-x-4">
-          <a
-            href="#"
-            className="hidden md:inline-block text-gray-600 hover:text-black"
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            onClick={() => navigate("/auth")}
           >
-            Log in
-          </a>
-          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-            Try Vrain free
+            Login
           </button>
         </div>
       </nav>
@@ -55,7 +54,10 @@ export default function Home() {
                 Write. Plan. Collaborate. With a little help from AI.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <button className="px-6 py-3 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600">
+                <button
+                  className="px-6 py-3 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600"
+                  onClick={() => navigate("/auth")}
+                >
                   Get Vrain free
                 </button>
                 <button className="px-6 py-3 bg-gray-100 text-gray-800 rounded-md font-medium hover:bg-gray-200">

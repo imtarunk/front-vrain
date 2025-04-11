@@ -15,7 +15,7 @@ import { X, Search, ChevronRight, Calendar, Bookmark } from "lucide-react";
 import { Input } from "./input";
 import { Textarea } from "./textarea";
 import { Button } from "./button";
-import Avater from "../avater";
+import Avatar from "../avater";
 import NoteEditor from "../NoteEditor";
 import { backendURL } from "@/lib/utils";
 
@@ -40,6 +40,10 @@ interface SidebarProps {
   setPage: SetPageFunction;
 }
 
+interface UserResponse {
+  fullname: string;
+}
+
 interface SidebarMenuProps {
   text: string;
   icon: ReactElement<{ size?: number; className?: string }>;
@@ -55,6 +59,7 @@ const ModernSidebar = ({ setPage }: SidebarProps) => {
   const [activePage, setActivePage] = useState("Home");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [userData, setUserData] = useState<string>("");
 
   useEffect(() => {
     fetchRecentNotes();
@@ -72,6 +77,24 @@ const ModernSidebar = ({ setPage }: SidebarProps) => {
       }
     };
 
+    const fetchUserData = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const response = await axios.get<UserResponse>(
+          `${backendURL}/api/v1/user`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setUserData(response.data.fullname);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setUserData("");
+      }
+    };
+    fetchUserData();
     window.addEventListener("resize", handleResize);
     handleResize();
 
@@ -277,14 +300,15 @@ const ModernSidebar = ({ setPage }: SidebarProps) => {
           >
             {isCollapsed ? (
               <div onClick={handleLogout}>
-                <Avater />
+                <Avatar fullname={userData} />
               </div>
             ) : (
               <>
-                <Avater />
+                <Avatar fullname={userData} />
                 <div className="ml-3 flex-grow">
-                  <p className="text-sm font-medium">User Name</p>
-                  <p className="text-xs text-gray-500">user@example.com</p>
+                  <p className="text-xl font-medium text-black">
+                    {userData || "User"}
+                  </p>
                 </div>
                 <button
                   onClick={handleLogout}

@@ -13,7 +13,6 @@ import {
   Calendar,
   Clock,
   Tag,
-  Share2,
 } from "lucide-react";
 import { backendURL } from "@/lib/utils";
 import NoteEditor from "@/components/NoteEditor";
@@ -167,10 +166,6 @@ const NotePage = () => {
   const handleCopyShareLink = () => {
     navigator.clipboard.writeText(shareLink);
     toast.success("Share link copied to clipboard!");
-  };
-
-  const handleOpenShareModal = () => {
-    setIsShareModalOpen(true);
   };
 
   if (loading) {

@@ -84,6 +84,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
           onSave();
         }
       } else {
+        //@ts-expect-error response.data is not typed
         throw new Error(response.data?.message || "Failed to save note");
       }
     } catch (error) {

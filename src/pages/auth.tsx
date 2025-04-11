@@ -15,6 +15,7 @@ const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [fullname, setFullname] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -30,6 +31,7 @@ const AuthPage = () => {
       const response = await axios.post<AuthResponse>(url, {
         username,
         password,
+        ...(isLogin ? {} : { fullname }),
       });
 
       if (response.status === 200) {
@@ -71,29 +73,46 @@ const AuthPage = () => {
         </h2>
 
         <form className="flex flex-col space-y-4" onSubmit={handleLogin}>
-          <div>
-            <label className="block text-sm mb-1 font-medium">Email</label>
-            <input
-              type="email"
-              className="w-full p-3 bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder="Enter your email"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm mb-1 font-medium">Password</label>
-            <input
-              type="password"
-              className="w-full p-3 bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder={
-                isLogin ? "Enter your password" : "Create a password"
-              }
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+          <div className="space-y-4">
+            {!isLogin && (
+              <div>
+                <label className="block text-sm mb-1 font-medium">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  className="w-full p-3 bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="Enter your full name"
+                  required
+                  value={fullname}
+                  onChange={(e) => setFullname(e.target.value)}
+                />
+              </div>
+            )}
+            <div>
+              <label className="block text-sm mb-1 font-medium">Email</label>
+              <input
+                type="email"
+                className="w-full p-3 bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                placeholder="Enter your email"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1 font-medium">Password</label>
+              <input
+                type="password"
+                className="w-full p-3 bg-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                placeholder={
+                  isLogin ? "Enter your password" : "Create a password"
+                }
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
           </div>
           {!isLogin && (
             <p className="text-xs text-gray-400">
